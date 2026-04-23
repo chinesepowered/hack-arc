@@ -61,67 +61,80 @@ export async function sendStamp(input: SendStampInput) {
     createdAt: new Date(),
   });
 
-  // 1) approve USDC → escrow
-  const approveTx = await executeContract({
-    walletId: input.senderWalletId,
-    contractAddress: USDC_ADDRESS,
-    abiFunctionSignature: "approve(address,uint256)",
-    abiParameters: [escrow, stakeWei.toString()],
-  });
-  await pollTx(approveTx.id);
+  try {
+    // 1) approve USDC → escrow
+    const approveTx = await executeContract({
+      walletId: input.senderWalletId,
+      contractAddress: USDC_ADDRESS,
+      abiFunctionSignature: "approve(address,uint256)",
+      abiParameters: [escrow, stakeWei.toString()],
+    });
+    await pollTx(approveTx.id);
 
-  // 2) sendStamp
-  const sendTx = await executeContract({
-    walletId: input.senderWalletId,
-    contractAddress: escrow,
-    abiFunctionSignature: "sendStamp(address,uint128,bytes32)",
-    abiParameters: [recipient.walletAddress, stakeWei.toString(), hash],
-  });
-  const confirmed = await pollTx(sendTx.id);
+    // 2) sendStamp
+    const sendTx = await executeContract({
+      walletId: input.senderWalletId,
+      contractAddress: escrow,
+      abiFunctionSignature: "sendStamp(address,uint128,bytes32)",
+      abiParameters: [recipient.walletAddress, stakeWei.toString(), hash],
+    });
+    const confirmed = await pollTx(sendTx.id);
 
-  // Extract the onchain id by parsing the StampSent event.
-  let onchainId: bigint | undefined;
-  if (confirmed.txHash) {
-    try {
-      const receipt = await publicClient.getTransactionReceipt({
-        hash: confirmed.txHash as Hex,
-      });
-      for (const log of receipt.logs) {
-        if (log.address.toLowerCase() !== escrow.toLowerCase()) continue;
-        try {
-          const decoded = decodeEventLog({
-            abi: STAMP_ESCROW_ABI,
-            data: log.data,
-            topics: log.topics,
-          });
-          if (decoded.eventName === "StampSent") {
-            onchainId = decoded.args.id as bigint;
-            break;
+    // Extract the onchain id by parsing the StampSent event.
+    let onchainId: bigint | undefined;
+    if (confirmed.txHash) {
+      try {
+        // waitForTransactionReceipt handles the case where Circle reports the
+        // tx confirmed but the RPC hasn't yet indexed the receipt.
+        const receipt = await publicClient.waitForTransactionReceipt({
+          hash: confirmed.txHash as Hex,
+          timeout: 20_000,
+        });
+        for (const log of receipt.logs) {
+          if (log.address.toLowerCase() !== escrow.toLowerCase()) continue;
+          try {
+            const decoded = decodeEventLog({
+              abi: STAMP_ESCROW_ABI,
+              data: log.data,
+              topics: log.topics,
+            });
+            if (decoded.eventName === "StampSent") {
+              onchainId = decoded.args.id as bigint;
+              break;
+            }
+          } catch {
+            /* not our event */
           }
-        } catch {
-          /* not our event */
         }
+      } catch (err) {
+        console.warn("could not decode StampSent event", err);
       }
-    } catch (err) {
-      console.warn("could not decode StampSent event", err);
     }
+
+    await db
+      .update(schema.stamps)
+      .set({
+        status: "pending",
+        sendTxHash: confirmed.txHash ?? null,
+        onchainId: onchainId ?? null,
+      })
+      .where(eq(schema.stamps.id, stampId));
+
+    return {
+      stampId,
+      onchainId: onchainId?.toString(),
+      txHash: confirmed.txHash,
+      stake: weiToUsdc(stakeWei),
+    };
+  } catch (err) {
+    // Mark the DB row as failed so the UI doesn't show a perpetual
+    // "submitting" state, then re-throw so the caller sees the error.
+    await db
+      .update(schema.stamps)
+      .set({ status: "failed" })
+      .where(eq(schema.stamps.id, stampId));
+    throw err;
   }
-
-  await db
-    .update(schema.stamps)
-    .set({
-      status: "pending",
-      sendTxHash: confirmed.txHash ?? null,
-      onchainId: onchainId ?? null,
-    })
-    .where(eq(schema.stamps.id, stampId));
-
-  return {
-    stampId,
-    onchainId: onchainId?.toString(),
-    txHash: confirmed.txHash,
-    stake: weiToUsdc(stakeWei),
-  };
 }
 
 export async function triageStamp(params: {
@@ -143,7 +156,11 @@ export async function triageStamp(params: {
     .limit(1);
   if (!stamp) throw new Error("stamp not found");
   if (stamp.status !== "pending") throw new Error(`stamp is ${stamp.status}`);
-  if (!stamp.onchainId) throw new Error("stamp has no onchain id yet");
+  if (!stamp.onchainId) {
+    throw new Error(
+      "stamp has no onchain id — the send tx landed but the event decode failed. Scan StampEscrow events for this message hash to recover."
+    );
+  }
 
   const tx = await executeContract({
     walletId: params.walletId,
@@ -183,11 +200,14 @@ export async function triageBatch(params: {
         eq(schema.stamps.status, "pending")
       )
     );
-  const onchainIds = rows
-    .map((r) => r.onchainId)
-    .filter((x): x is bigint => x != null)
-    .map((x) => x.toString());
-  if (!onchainIds.length) return { txHash: null, count: 0 };
+
+  // Only stamps with a known onchain id can be submitted to the batch.
+  // Rows with a null onchain id (event decode failed at send time) must not
+  // be marked resolved in the DB — the chain state hasn't changed for them.
+  const submittable = rows.filter((r) => r.onchainId != null);
+  if (!submittable.length) return { txHash: null, count: 0 };
+
+  const onchainIds = submittable.map((r) => r.onchainId!.toString());
 
   const tx = await executeContract({
     walletId: params.walletId,
@@ -211,11 +231,15 @@ export async function triageBatch(params: {
       and(
         inArray(
           schema.stamps.id,
-          rows.map((r) => r.id)
+          submittable.map((r) => r.id)
         ),
         eq(schema.stamps.status, "pending")
       )
     );
 
-  return { txHash: confirmed.txHash, count: rows.length };
+  return {
+    txHash: confirmed.txHash,
+    count: submittable.length,
+    skipped: rows.length - submittable.length,
+  };
 }

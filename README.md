@@ -82,13 +82,8 @@ apps/web/            Next.js 16 app
 3. Generate + register an **Entity Secret** (hex string) — put it in
    `CIRCLE_ENTITY_SECRET`
 4. Create a `WalletSet` — put its ID in `CIRCLE_WALLET_SET_ID`
-5. **Confirm `CIRCLE_BLOCKCHAIN` for Arc Testnet.** This is the one value I
-   could not verify from public docs while building. The app defaults to
-   `EVM-TESTNET`, but the real identifier is probably something like
-   `ARC-TESTNET`. Check the Circle console&rsquo;s chain selector when
-   creating a wallet — whatever string they use is what belongs in
-   `CIRCLE_BLOCKCHAIN`. If it&rsquo;s wrong you&rsquo;ll get a 400 from
-   `POST /v1/w3s/developer/wallets` on signup.
+5. `CIRCLE_BLOCKCHAIN` is already set correctly to `ARC-TESTNET` — no
+   action needed. The Circle console uses the same identifier.
 
 ### 3. Database (TiDB Cloud)
 
@@ -119,7 +114,7 @@ LLM_MODEL=glm-5.1
 
 ```bash
 cd apps/web
-cp ../../.env.example .env
+cp .env.example .env
 # fill in secrets from steps above
 pnpm install
 pnpm dev

@@ -9,8 +9,11 @@ const PUBLIC = new Set(["/", "/auth/sign-in", "/auth/sign-up"]);
 
 export const proxy = auth((req) => {
   const { pathname } = req.nextUrl;
+  // Let API routes through — each handler checks auth itself and returns
+  // 401 JSON. Redirecting them to /auth/sign-in would break `fetch()`
+  // callers that try to parse the response as JSON.
   if (
-    pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/api/") ||
     pathname.startsWith("/_next") ||
     PUBLIC.has(pathname)
   ) {

@@ -117,14 +117,11 @@ plaintext per request.
 2. Name it anything (e.g. `stamp-hackathon`)
 3. Copy the **Wallet Set ID** → `CIRCLE_WALLET_SET_ID`
 
-### 3d. Confirm the blockchain identifier for Arc Testnet
+### 3d. Blockchain identifier
 
-When the console shows you the chain picker while creating a wallet
-manually, note the exact string Circle uses for Arc Testnet (likely
-`ARC-TESTNET` or similar). Put that string in `CIRCLE_BLOCKCHAIN` in
-`.env`. **If this is wrong, signup will fail with a 400 from
-`/v1/w3s/developer/wallets`.** The codebase defaults to `EVM-TESTNET` as a
-placeholder.
+`CIRCLE_BLOCKCHAIN=ARC-TESTNET` is already the default in
+`.env.example` — Circle's public docs confirm this is the canonical
+identifier. You don't need to change it.
 
 ---
 
@@ -171,10 +168,12 @@ Any OpenAI-compatible endpoint works — Groq, Together, local Ollama with
 ## 6. Write `.env`
 
 ```bash
+cd apps/web
 cp .env.example .env
 ```
 
-Fill in, at minimum:
+The `.env` must live at `apps/web/.env` — that's where Next.js and
+`drizzle-kit` look for it. Fill in, at minimum:
 
 - `STAMP_ESCROW_ADDRESS` — from step 2c
 - `FEE_SINK_ADDRESS` — the address you passed as `_feeSink` in step 2c
@@ -269,7 +268,7 @@ open a third for the judge role.
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| `POST /v1/w3s/developer/wallets 400` on signup | `CIRCLE_BLOCKCHAIN` wrong | Check the Circle console's chain picker for the exact Arc slug |
+| `POST /v1/w3s/developer/wallets 400` on signup | `CIRCLE_BLOCKCHAIN` mismatch (should be `ARC-TESTNET`) or Entity Secret ciphertext not registered | Re-register the Entity Secret ciphertext in the Circle console |
 | `CIRCLE_API_KEY not set` | `.env` not loaded | `cp .env.example .env`, fill values, restart `pnpm dev` |
 | Signup succeeds but compose says "no wallet provisioned" | Wallet creation silently failed | Navigate to `/onboard` and click **Retry wallet creation** |
 | `Circle tx ... timed out` | Arc RPC hiccup or Circle processing slow | Retry the action; the DB row stays in `submitting` and will be reconciled |

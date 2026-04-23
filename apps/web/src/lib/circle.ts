@@ -68,7 +68,7 @@ async function buildEntitySecretCiphertext(): Promise<string> {
   return encrypted.toString("base64");
 }
 
-export const CIRCLE_BLOCKCHAIN = process.env.CIRCLE_BLOCKCHAIN ?? "EVM-TESTNET";
+export const CIRCLE_BLOCKCHAIN = process.env.CIRCLE_BLOCKCHAIN ?? "ARC-TESTNET";
 
 export type CircleWallet = {
   id: string;
@@ -153,7 +153,12 @@ export async function executeContract(
     contractAddress: input.contractAddress,
     abiFunctionSignature: input.abiFunctionSignature,
     abiParameters: input.abiParameters,
-    feeLevel: input.feeLevel ?? "MEDIUM",
+    // Circle's current contractExecution endpoint wants the fee nested:
+    // { fee: { type: "level", config: { feeLevel: "LOW" | "MEDIUM" | "HIGH" } } }
+    fee: {
+      type: "level",
+      config: { feeLevel: input.feeLevel ?? "MEDIUM" },
+    },
   };
   const { data } = await circleFetch<{
     data: { id: string; state: string; txHash?: string };

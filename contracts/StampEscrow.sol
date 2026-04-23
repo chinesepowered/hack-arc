@@ -44,6 +44,8 @@ contract StampEscrow is Ownable, ReentrancyGuard {
     event ConfigUpdated(uint256 feeBps, uint256 expiryWindow, address feeSink);
 
     constructor(IERC20 _usdc, address _feeSink) Ownable(msg.sender) {
+        require(address(_usdc) != address(0), "bad usdc");
+        require(_feeSink != address(0), "bad feeSink");
         usdc = _usdc;
         feeSink = _feeSink;
         protocolFeeBps = 500;          // 5%

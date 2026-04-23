@@ -21,11 +21,7 @@ export function DemoPanel() {
       const res = await fetch("/api/demo/spam-wave", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          fromHandle: targetHandle, // handle that receives the wave
-          count,
-          stakeUsdc: stake,
-        }),
+        body: JSON.stringify({ toHandle: targetHandle, count, stakeUsdc: stake }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "spam-wave failed");
