@@ -1,0 +1,15 @@
+node_modules/
+.next/
+.turbo/
+dist/
+out/
+
+.env
+.env.local
+.env.*.local
+
+*.tsbuildinfo
+.DS_Store
+
+# drizzle snapshots are committed; local artifacts are not
+apps/web/drizzle/meta/.cache
