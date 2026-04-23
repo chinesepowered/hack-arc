@@ -110,8 +110,18 @@ export async function getWalletBalance(walletId: string): Promise<bigint> {
   }>(`/v1/w3s/wallets/${walletId}/balances`);
   const usdc = data.tokenBalances.find((b) => b.token.symbol === "USDC");
   if (!usdc) return 0n;
-  // amount is a decimal string like "1.234567"; convert to base units
-  return BigInt(Math.round(parseFloat(usdc.amount) * 10 ** usdc.token.decimals));
+  return parseDecimalToBaseUnits(usdc.amount, usdc.token.decimals);
+}
+
+/**
+ * Convert a decimal string like "1.234567" into integer base units without
+ * going through floating-point (parseFloat would lose precision for large
+ * amounts or high-decimal tokens).
+ */
+function parseDecimalToBaseUnits(decimal: string, decimals: number): bigint {
+  const [whole, frac = ""] = decimal.split(".");
+  const fracPadded = (frac + "0".repeat(decimals)).slice(0, decimals);
+  return BigInt(whole) * 10n ** BigInt(decimals) + BigInt(fracPadded || "0");
 }
 
 export type ContractExecutionInput = {
@@ -169,7 +179,11 @@ export async function pollTx(
   while (Date.now() - start < timeoutMs) {
     const tx = await getTx(id);
     if (tx.state === "CONFIRMED" || tx.state === "COMPLETE") return tx;
-    if (tx.state === "FAILED" || tx.state === "CANCELED") {
+    if (
+      tx.state === "FAILED" ||
+      tx.state === "CANCELED" ||
+      tx.state === "DENIED"
+    ) {
       throw new Error(`Circle tx ${id} ended in state ${tx.state}`);
     }
     await new Promise((r) => setTimeout(r, intervalMs));

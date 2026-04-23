@@ -43,7 +43,8 @@ export const stamps = mysqlTable(
     recipientAddress: varchar("recipient_address", { length: 42 }).notNull(),
     subject: varchar("subject", { length: 256 }).notNull(),
     body: text("body").notNull(),
-    stakeWei: varchar("stake_wei", { length: 40 }).notNull(), // string for bigint
+    // uint256 max is 78 digits; give plenty of headroom
+    stakeWei: varchar("stake_wei", { length: 80 }).notNull(),
     status: mysqlEnum("status", [
       "submitting",
       "pending",

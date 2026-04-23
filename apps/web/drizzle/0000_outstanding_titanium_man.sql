@@ -7,7 +7,7 @@ CREATE TABLE `stamps` (
 	`recipient_address` varchar(42) NOT NULL,
 	`subject` varchar(256) NOT NULL,
 	`body` text NOT NULL,
-	`stake_wei` varchar(40) NOT NULL,
+	`stake_wei` varchar(80) NOT NULL,
 	`status` enum('submitting','pending','refunded','forfeited','expired','failed') NOT NULL DEFAULT 'submitting',
 	`send_tx_hash` varchar(66),
 	`resolve_tx_hash` varchar(66),

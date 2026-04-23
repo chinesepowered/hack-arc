@@ -82,13 +82,24 @@ apps/web/            Next.js 16 app
 3. Generate + register an **Entity Secret** (hex string) — put it in
    `CIRCLE_ENTITY_SECRET`
 4. Create a `WalletSet` — put its ID in `CIRCLE_WALLET_SET_ID`
-5. Confirm the blockchain identifier Circle uses for Arc Testnet — set
-   `CIRCLE_BLOCKCHAIN` (defaults to `EVM-TESTNET`)
+5. **Confirm `CIRCLE_BLOCKCHAIN` for Arc Testnet.** This is the one value I
+   could not verify from public docs while building. The app defaults to
+   `EVM-TESTNET`, but the real identifier is probably something like
+   `ARC-TESTNET`. Check the Circle console&rsquo;s chain selector when
+   creating a wallet — whatever string they use is what belongs in
+   `CIRCLE_BLOCKCHAIN`. If it&rsquo;s wrong you&rsquo;ll get a 400 from
+   `POST /v1/w3s/developer/wallets` on signup.
 
 ### 3. Database (TiDB Cloud)
 
 1. Create a free Serverless cluster at https://tidbcloud.com
-2. Grab the MySQL connection string — paste it into `DATABASE_URL`
+2. Grab the MySQL connection string. TiDB Serverless **requires TLS**, so the
+   string must include SSL params. The format that works with `mysql2`:
+   ```
+   mysql://<user>:<pass>@gateway01.<region>.prod.aws.tidbcloud.com:4000/<db>?ssl={"rejectUnauthorized":true}
+   ```
+   Paste it into `DATABASE_URL` (wrap in single quotes in `.env` because of
+   the double-quotes inside the value).
 3. Run migrations:
    ```bash
    cd apps/web
@@ -124,22 +135,23 @@ Open http://localhost:3000
 3. Send each wallet ~$5 of testnet USDC from https://faucet.circle.com so
    they have both gas and stake liquidity.
 
-**Live walkthrough**:
+**Live walkthrough** (produces 55 tx without using batching):
 
 | # | Action | Tx on Arc |
 |---|--------|-----------|
-| 1 | Sign up a 3rd judge account (passkey-free, wallet auto-provisioned) | 0 |
-| 2 | From judge → compose a stamped message to `founder` ($0.25) | 2 (approve + send) |
-| 3 | Switch to `founder` inbox — judge sees it with status `pending` | 0 |
+| 1 | Sign up a 3rd judge account (wallet auto-provisioned) | 0 |
+| 2 | Judge → compose stamped message to `founder` ($0.25) | 2 (approve + send) |
+| 3 | Switch to `founder` inbox; status = `pending` | 0 |
 | 4 | Founder clicks **Refund** → judge's stake returns | 1 |
-| 5 | Open `/demo` as `spammer`, fire 15 stamps at `founder` ($0.10 each) | 30 |
-| 6 | Switch to `founder`, click **AI triage (GLM)** → 15 classifications persist | 0 |
-| 7 | Click **Select AI-spam** → **Forfeit** (bulk) | 1 |
-| 8 | Show ArcScan: all tx visible; spammer balance down, founder balance up | — |
+| 5 | Open `/demo` as `spammer`, fire **25** stamps at `founder` ($0.10 each) | 50 |
+| 6 | Switch to `founder`, click **AI triage (GLM)** → classifications persist | 0 |
+| 7 | Triage one-by-one (5 Refund + 20 Forfeit, individual clicks) | 25 |
+| 8 | Show ArcScan: tx feed, spammer balance down, founder balance up | — |
 
-**Total: ~34 tx from this flow; extend to 50+ by running the spam wave twice
-or increasing `count`.** `forfeitBatch` and `refundBatch` collapse N resolves
-into 1 tx, but a purist demo can triage messages individually for 1 tx each.
+**Total: 2 + 1 + 50 + 25 = 78 tx.** For a shorter demo, use bulk **Forfeit**
+on step 7 (`forfeitBatch`) to collapse 25 resolves into 1 tx — still 53 tx.
+
+Running the spam wave a second time trivially doubles the count.
 
 ## Architecture
 

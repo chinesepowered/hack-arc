@@ -33,7 +33,9 @@ export default function SignUpPage() {
         redirect: false,
       });
       if (login?.error) throw new Error(login.error);
-      router.push("/inbox");
+      // If wallet provisioning didn't complete, send them through /onboard
+      // to retry before they try to send stamps.
+      router.push(data.walletAddress ? "/inbox" : "/onboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "unknown error");
     } finally {

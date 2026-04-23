@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
   };
   if (!user.walletId || !user.walletAddress) {
     return NextResponse.json(
-      { error: "no wallet provisioned for this user" },
+      { error: "no wallet provisioned — go to /onboard to retry" },
       { status: 400 }
     );
   }
