@@ -1,7 +1,5 @@
 # Feedback for Circle — Agentic Economy on Arc hackathon
 
-*(Draft. Refine before submitting for the $500 feedback-track prize.)*
-
 ## What worked
 
 - **USDC-as-gas is a genuinely new DX.** Not having to think in two
