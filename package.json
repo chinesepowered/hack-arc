@@ -9,7 +9,8 @@
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "circle:register-entity": "node scripts/register-entity-secret.mjs"
+    "circle:register-entity": "node scripts/register-entity-secret.mjs",
+    "circle:create-wallet-set": "node scripts/create-wallet-set.mjs"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.2",
