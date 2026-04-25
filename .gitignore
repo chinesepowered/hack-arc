@@ -37,6 +37,10 @@ yarn-error.log*
 # vercel
 .vercel
 
+# Circle Entity Secret recovery file — DO NOT commit
+circle-recovery.dat
+circle-entity-secret-registration.json
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

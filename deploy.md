@@ -96,17 +96,33 @@ operations. You generate it once, register its RSA-encrypted ciphertext
 with Circle, then keep the plaintext locally. The app re-encrypts the
 plaintext per request.
 
-1. Generate a hex string:
-   ```bash
-   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-   ```
-2. In the Circle console → **Developer → Configurator → Entity Secret →
-   Register Entity Secret Ciphertext**. The console walks you through
-   RSA-encrypting your secret with Circle's public key (it even provides a
-   one-click encrypt form).
-3. Confirm registration.
-4. Store the **plaintext hex** (from step 1) in your `.env` as
-   `CIRCLE_ENTITY_SECRET`. Never commit this file.
+The Circle console UI for this is buried (it's not under "Keys" — those
+are API keys, Client keys, and Kit keys). The fastest path is to run
+the included script, which uses the official Circle SDK to generate +
+register + save the recovery file in one shot.
+
+```bash
+# After putting CIRCLE_API_KEY in .env (from step 3a):
+pnpm circle:register-entity
+```
+
+The script will:
+1. Generate a fresh 32-byte hex Entity Secret
+2. Encrypt it with Circle's public key and POST the ciphertext to
+   `/v1/w3s/config/entity/entitySecret`
+3. Save the recovery file to `./circle-recovery.dat`
+4. Print a `CIRCLE_ENTITY_SECRET=...` line for you to paste into `.env`
+
+Then:
+- Paste the printed `CIRCLE_ENTITY_SECRET=...` into your `.env`
+- Move `circle-recovery.dat` somewhere safe outside the repo (it's
+  gitignored, but you'll want it in a password manager — it's the only
+  way to reset the Entity Secret if you lose the plaintext)
+
+> If you'd rather use the Circle Console UI: it lives under the
+> **Programmable Wallets** section as a setup wizard that appears the
+> first time you try to create a wallet (not under the "Keys" page).
+> The script avoids hunting for it.
 
 ### 3c. Wallet Set
 
