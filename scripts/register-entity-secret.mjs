@@ -26,14 +26,14 @@ console.log("Registering ciphertext with Circle...");
 const response = await registerEntitySecretCiphertext({
   apiKey,
   entitySecret,
-  // The SDK writes a recovery file to the cwd by default; pin the path
-  // so you know exactly where to find it. KEEP THIS FILE SAFE — it's how
-  // you reset the Entity Secret if you lose it.
-  recoveryFileDownloadPath: "./circle-recovery.dat",
+  // SDK requires a DIRECTORY here (not a file). It writes the recovery
+  // file inside, named with its own scheme. KEEP IT SAFE — it's how you
+  // reset the Entity Secret if you lose the plaintext.
+  recoveryFileDownloadPath: "./",
 });
 
 console.log("✔ Registered.");
-console.log("✔ Recovery file saved to ./circle-recovery.dat");
+console.log("✔ Recovery file saved to ./ (look for *.dat next to package.json)");
 console.log("");
 console.log("Next steps:");
 console.log("  1. Paste the CIRCLE_ENTITY_SECRET line above into .env");
