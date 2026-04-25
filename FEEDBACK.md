@@ -19,7 +19,7 @@
 - **Entity Secret ciphertext flow** is non-obvious. Documentation could
   include a copy-pasteable Node/Python snippet for the RSA-OAEP encryption
   that happens on every Entity-Secret-gated call. Our working version is in
-  `apps/web/src/lib/circle.ts`.
+  `src/lib/circle.ts`.
 - **Circle blockchain identifier for Arc testnet**: we couldn't find a
   definitive string (we used `EVM-TESTNET`). A canonical table on
   developers.circle.com → Arc page would save hours.

@@ -43,18 +43,17 @@ wallet infra are what make this product possible.
 
 ```
 contracts/           StampEscrow.sol — paste into Remix and deploy
-apps/web/            Next.js 16 app
-  src/
-    app/             routes (inbox, sent, compose, demo, api/*)
-    lib/
-      arc.ts         Arc chain + Viem clients
-      contract.ts    StampEscrow ABI + helpers
-      circle.ts      Circle Dev-Controlled Wallet REST wrapper
-      stamp.ts       sendStamp / refund / forfeit orchestration
-      db/            Drizzle schema + client
-      llm.ts         GLM 5.1 client (OpenAI-compat)
-    proxy.ts         Auth guard (Next.js 16 replaces middleware.ts)
-  drizzle/           generated SQL migrations
+src/
+  app/               routes (inbox, sent, compose, demo, api/*)
+  lib/
+    arc.ts           Arc chain + Viem clients
+    contract.ts      StampEscrow ABI + helpers
+    circle.ts        Circle Dev-Controlled Wallet REST wrapper
+    stamp.ts         sendStamp / refund / forfeit orchestration
+    db/              Drizzle schema + client
+    llm.ts           GLM 5.1 client (OpenAI-compat)
+  proxy.ts           Auth guard (Next.js 16 replaces middleware.ts)
+drizzle/             generated SQL migrations
 .env.example         all required env vars
 ```
 
@@ -97,7 +96,6 @@ apps/web/            Next.js 16 app
    the double-quotes inside the value).
 3. Run migrations:
    ```bash
-   cd apps/web
    pnpm db:push
    ```
 
@@ -113,7 +111,6 @@ LLM_MODEL=glm-5.1
 ### 5. Run
 
 ```bash
-cd apps/web
 cp .env.example .env
 # fill in secrets from steps above
 pnpm install

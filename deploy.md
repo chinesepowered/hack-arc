@@ -33,9 +33,6 @@ cd hack-arc
 pnpm install
 ```
 
-(`pnpm install` runs at the repo root and hydrates `apps/web` via the
-workspace.)
-
 ---
 
 ## 2. Deploy `StampEscrow.sol` via Remix
@@ -168,12 +165,11 @@ Any OpenAI-compatible endpoint works — Groq, Together, local Ollama with
 ## 6. Write `.env`
 
 ```bash
-cd apps/web
 cp .env.example .env
 ```
 
-The `.env` must live at `apps/web/.env` — that's where Next.js and
-`drizzle-kit` look for it. Fill in, at minimum:
+The `.env` lives at the repo root — that's where Next.js and `drizzle-kit`
+look for it. Fill in, at minimum:
 
 - `STAMP_ESCROW_ADDRESS` — from step 2c
 - `FEE_SINK_ADDRESS` — the address you passed as `_feeSink` in step 2c
@@ -191,8 +187,8 @@ correct as defaults.
 ## 7. Push schema & run
 
 ```bash
-pnpm -C apps/web db:push    # creates `users` and `stamps` tables in TiDB
-pnpm -C apps/web dev        # starts Next.js on http://localhost:3000
+pnpm db:push    # creates `users` and `stamps` tables in TiDB
+pnpm dev        # starts Next.js on http://localhost:3000
 ```
 
 If `db:push` prompts about a schema rename or data loss, answer **No** —
@@ -281,24 +277,26 @@ open a third for the judge role.
 ## 10. (Optional) Deploy to Vercel
 
 ```bash
-pnpm -C apps/web build   # sanity check
+pnpm build   # sanity check locally first
 ```
 
-1. Push the branch to GitHub (already done if you pushed
-   `claude/agentic-economy-arc-qio3z`)
+1. Push the branch to GitHub
 2. Import the repo at https://vercel.com/new
-3. **Root directory**: `apps/web`
-4. **Framework preset**: Next.js (auto-detected)
-5. **Build command**: `pnpm build`
-6. **Install command**: `pnpm install` (root); Vercel handles the
-   workspace automatically
-7. Add every variable from your `.env` as an environment variable in the
-   Vercel project settings. Remember `AUTH_TRUST_HOST=true` and set
+3. Vercel auto-detects Next.js — no Root Directory tweak needed because
+   the app lives at the repo root.
+4. Add every variable from your `.env` as an environment variable in the
+   Vercel project settings. Set `AUTH_TRUST_HOST=true` and
    `AUTH_URL=https://<your-app>.vercel.app`.
-8. Deploy
+5. Deploy.
 
-Arc Testnet works identically from localhost and from Vercel — the RPC is
-public. The only thing that changes is `AUTH_URL`.
+Caveat: the `/demo` spam-wave route runs serially through 25+ Circle
+calls and exceeds Vercel's serverless function timeout (10s on Hobby,
+60s on Pro). For the live demo, run locally with `pnpm dev`. Vercel
+deploy is fine for everything else (signup, single-message send, triage,
+inbox view).
+
+Arc Testnet works identically from localhost and from Vercel — the RPC
+is public. The only thing that changes is `AUTH_URL`.
 
 ---
 
