@@ -1,7 +1,5 @@
 # Stamp — pay-to-reach inbox on Arc
 
-**Circle "Agentic Economy" hackathon · Arc Testnet · USDC · Nanopayments**
-
 Senders stake USDC to get a stranger's attention. If the recipient decides the
 message is legit, the stake is refunded. If it's spam, the recipient keeps it
 (minus a small protocol fee). Settled per-message on Arc with sub-cent gas.

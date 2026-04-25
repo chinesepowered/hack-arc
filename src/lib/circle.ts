@@ -153,12 +153,9 @@ export async function executeContract(
     contractAddress: input.contractAddress,
     abiFunctionSignature: input.abiFunctionSignature,
     abiParameters: input.abiParameters,
-    // Circle's current contractExecution endpoint wants the fee nested:
-    // { fee: { type: "level", config: { feeLevel: "LOW" | "MEDIUM" | "HIGH" } } }
-    fee: {
-      type: "level",
-      config: { feeLevel: input.feeLevel ?? "MEDIUM" },
-    },
+    // Circle's contractExecution endpoint wants feeLevel as a top-level field.
+    // The nested { fee: { type: "level", config: {...} } } shape is rejected.
+    feeLevel: input.feeLevel ?? "MEDIUM",
   };
   const { data } = await circleFetch<{
     data: { id: string; state: string; txHash?: string };
