@@ -1,184 +1,121 @@
-# Stamp — pay-to-reach inbox on Arc
+# 📬 Stamp — your inbox, finally worth opening
 
-Senders stake USDC to get a stranger's attention. If the recipient decides the
-message is legit, the stake is refunded. If it's spam, the recipient keeps it
-(minus a small protocol fee). Settled per-message on Arc with sub-cent gas.
+**Strangers stake real money to reach you. Legit messages get their stake back. Spammers fund your coffee.**
 
-## Track alignment
+Stamp turns the most abused channel on the internet — your inbox — into a tiny marketplace for your attention. Every cold message arrives with a **refundable USDC stake** attached. You decide if it was worth your time.
 
-Primary: **🛒 Real-Time Micro-Commerce Flow** — economic activity is triggered
-and settled per interaction, not per subscription. Every stamp is an onchain
-USDC transfer into escrow, then a second onchain action by the recipient.
+---
 
-Secondary: **🤖 Agent-to-Agent Payment Loop** — the same escrow lets an AI
-agent pay for priority triage of another agent's inbox.
+## 💡 The idea in one sentence
 
-## Why this must be Nanopayments
+> If a stranger really wants you to read this, they can put a quarter on it.
 
-| Rail                   | Cost per $0.25 stamp       | Works? |
-| ---------------------- | -------------------------- | ------ |
-| Stripe                 | $0.30 + 2.9% = $0.308 fee  | ❌ net-negative |
-| Ethereum mainnet       | ~$0.50–$3 gas, paid in ETH | ❌ dominates stake |
-| **Arc / Nanopayments** | sub-cent gas, paid in USDC | ✅ viable |
+A spammer can't afford to do that 10,000 times. A real founder pitching you, a recruiter with a real role, a customer with a real complaint? They'll happily stake $0.25 to skip the noise — and get every cent back the moment you tap **Refund**.
 
-The stake amount (~$0.25) is chosen to be painful for spammers yet trivial for
-legitimate senders. Any rail that takes more than a few cents to move $0.25
-destroys the unit economics. Arc's USDC-native gas and Circle's programmable
-wallet infra are what make this product possible.
+---
 
-## Tech stack
+## 🪤 Why your inbox is broken
 
-- **Contracts**: Solidity `StampEscrow.sol` — deploy via Remix IDE
-- **Chain**: Arc Testnet (chain `5042002`, USDC at `0x3600…0000`)
-- **App**: Next.js 16 (App Router, React 19, Turbopack) with `pnpm`
-- **Wallets**: Circle Developer-Controlled Wallets (no seed phrases for users)
-- **Database**: TiDB Cloud (MySQL) via Drizzle ORM
-- **Chain client**: Viem 2 + WebSocket subscriptions
-- **Auth**: NextAuth v5 (credentials)
-- **LLM triage**: GLM 5.1 via OpenAI-compatible endpoint
+📨 **The asymmetry**: It costs a spammer $0.0001 to send you a message. It costs *you* 30 seconds to triage it. Multiply by 50 a day. The economics force you to either drown or build aggressive filters that bury the real signal.
 
-## Repo layout
+🔕 **What we tried**: Spam filters (false positives), unsubscribe links (ignored), CAPTCHA gates (insulting to humans), priority inbox AI (still has to read everything first).
 
-```
-contracts/           StampEscrow.sol — paste into Remix and deploy
-src/
-  app/               routes (inbox, sent, compose, demo, api/*)
-  lib/
-    arc.ts           Arc chain + Viem clients
-    contract.ts      StampEscrow ABI + helpers
-    circle.ts        Circle Dev-Controlled Wallet REST wrapper
-    stamp.ts         sendStamp / refund / forfeit orchestration
-    db/              Drizzle schema + client
-    llm.ts           GLM 5.1 client (OpenAI-compat)
-  proxy.ts           Auth guard (Next.js 16 replaces middleware.ts)
-drizzle/             generated SQL migrations
-.env.example         all required env vars
-```
+💰 **What actually works**: Make the sender put up collateral. Real intent has skin. Spam doesn't.
 
-## Setup (run once)
+This idea isn't new — it was proposed in **1997 as "hashcash"** (proof-of-work postage). It never shipped because the rails to move 25¢ at near-zero cost simply didn't exist. **Now they do.** That's the entire thesis.
 
-### 1. Contract
+---
 
-1. Open https://remix.ethereum.org
-2. Paste `contracts/StampEscrow.sol` into a new file
-3. Add Arc Testnet in MetaMask:
-   - RPC: `https://rpc.testnet.arc.network`
-   - Chain ID: `5042002`
-   - Currency symbol: `USDC`
-   - Block explorer: `https://testnet.arcscan.app`
-4. Fund the deployer wallet with testnet USDC: https://faucet.circle.com
-5. In Remix: Compile → Deploy with constructor args:
-   - `_usdc` = `0x3600000000000000000000000000000000000000`
-   - `_feeSink` = an address you control (protocol treasury)
-6. Copy the deployed contract address into `STAMP_ESCROW_ADDRESS` in `.env`
+## ✨ How it feels to use
 
-### 2. Circle Developer-Controlled Wallets
+**As a sender** ✉️
+1. Sign up. A USDC wallet is created for you instantly — no seed phrase, no extension, no MetaMask popup.
+2. Compose. Pay a $0.25 stamp.
+3. Get refunded the second the recipient confirms you weren't wasting their time.
 
-1. Sign in at https://console.circle.com
-2. Create a `TEST_API_KEY` — put it in `CIRCLE_API_KEY`
-3. Generate + register an **Entity Secret** (hex string) — put it in
-   `CIRCLE_ENTITY_SECRET`
-4. Create a `WalletSet` — put its ID in `CIRCLE_WALLET_SET_ID`
-5. `CIRCLE_BLOCKCHAIN` is already set correctly to `ARC-TESTNET` — no
-   action needed. The Circle console uses the same identifier.
+**As a recipient** 👀
+1. Your inbox shows only stamped messages — every one is worth at least 25¢ of someone's belief that you'll care.
+2. **AI triage** sorts the obvious spam in one tap.
+3. **Refund** the keepers. **Forfeit** the spam — that money is now yours.
 
-### 3. Database (TiDB Cloud)
+**As a spammer** 🚫
+You don't.
 
-1. Create a free Serverless cluster at https://tidbcloud.com
-2. Grab the MySQL connection string. TiDB Serverless **requires TLS**, so the
-   string must include SSL params. The format that works with `mysql2`:
-   ```
-   mysql://<user>:<pass>@gateway01.<region>.prod.aws.tidbcloud.com:4000/<db>?ssl={"rejectUnauthorized":true}
-   ```
-   Paste it into `DATABASE_URL` (wrap in single quotes in `.env` because of
-   the double-quotes inside the value).
-3. Run migrations:
-   ```bash
-   pnpm db:push
-   ```
+---
 
-### 4. LLM (for auto-triage)
+## 🎯 Who actually wants this
 
-GLM 5.1 via z.ai or any OpenAI-compatible endpoint:
-```
-LLM_BASE_URL=https://api.z.ai/api/paas/v4
-LLM_API_KEY=...
-LLM_MODEL=glm-5.1
-```
+- 👩‍💼 **Founders & investors** — every "quick 15-min call?" comes with proof of intent. Sort inbox by stake size.
+- 📰 **Journalists & researchers** — the tip line that filters itself.
+- 🛠️ **Open-source maintainers** — "please review my PR" backed by a token of respect, not entitlement.
+- 🤝 **Recruiters & candidates** — both sides demonstrate seriousness in a market full of noise.
+- 🤖 **AI agents** — when bots email other bots' humans at scale, stamps become the protocol-level rate limit. (See *Agent-to-agent* below.)
 
-### 5. Run
+---
+
+## 💸 The business
+
+Stamp keeps **5%** of every forfeited message — the protocol's only fee. There is no subscription, no per-seat pricing, no SaaS dashboard.
+
+**Worked example**: 10,000 messages a day. 10% are spam → forfeited at $0.25 each. Stamp earns **$12.50/day per 10k daily messages**. Linear with usage. Zero customer acquisition cost on the spammer side — they pay for the privilege of being filtered out.
+
+**Margin math** 📊:
+
+| Rail | Cost to move $0.25 | Verdict |
+|---|---|---|
+| 💳 Stripe | $0.31 fee | ❌ -24% |
+| ⛓️ Ethereum L1 | $0.50–$3 in ETH gas | ❌ -200%+ |
+| 🦊 Most L2s | $0.02–$0.20, paid in ETH | ⚠️ marginal + UX hell |
+| 🟦 **Arc + USDC nanopayments** | **sub-cent, paid in USDC** | ✅ **viable** |
+
+Stamp isn't a clever payments app. **It's the first product where the economics only close because of Arc.** Sub-cent settlement and USDC-as-gas are the load-bearing assumptions — without them this entire category dies in the prototype phase like it has every other time someone tried it since 1997.
+
+---
+
+## 🤖 The agent angle
+
+The same escrow primitive solves a problem that's about to get much worse: **AI agents emailing humans on behalf of other AI agents**. The volume curve is going vertical. Every existing anti-spam mechanism is built around "is this a human?" — useless when 95% of senders are legitimately authorized agents.
+
+Stamp doesn't ask *what* sent the message. It asks *what is it worth to you that I read it?* Agents bid for attention with their principals' USDC. The recipient — human or agent — keeps what wasn't worth reading.
+
+This is what an **agentic economy** actually looks like: programmable wallets, programmable money, programmable consent. All settled per-message, on-chain, in real time.
+
+---
+
+## 🛠️ Built on
+
+- ⛓️ **Arc Testnet** — sub-cent gas, USDC-native settlement
+- 🟦 **USDC** — the unit of account, the unit of stake, *and* the unit of gas
+- 🔐 **Circle Developer-Controlled Wallets** — every user gets a real wallet on signup, no seed phrase, no extension
+- ⚡ **Circle Nanopayments** — what makes a 25¢ atomic transfer economically rational
+- 📜 **`StampEscrow.sol`** — ~150 lines of audited-pattern Solidity (OpenZeppelin v5, ReentrancyGuard, SafeERC20). Approve → stake → refund or forfeit. That's it.
+- 🧠 **GLM 5.1** — pre-classifies inbound stamps so you triage 25 messages in 5 seconds instead of 5 minutes
+- 🚀 **Next.js 16 + React 19** — full-stack TypeScript, deployed in one click
+
+---
+
+## 🔭 What's next
+
+- 🏆 **Reputation (ERC-8004)** — senders build a public refund rate. Sort your inbox by *trustworthiness × stake*.
+- 💬 **Reply-pricing (x402)** — bill senders for a written response, not just a read.
+- 📥 **Agent inbox MCP** — let autonomous agents triage stamped inbounds on your behalf.
+- 🧱 **Anti-griefing** — per-recipient daily caps, per-sender cooldowns, all enforced on-chain.
+- 🌐 **Open recipient registry** — point any wallet at `stamp.gg/<handle>` and start receiving.
+
+---
+
+## 🚦 Try it
 
 ```bash
-cp .env.example .env
-# fill in secrets from steps above
 pnpm install
+pnpm db:create && pnpm db:push
 pnpm dev
 ```
 
-Open http://localhost:3000
+Open http://localhost:3000, sign up, and send your first stamp. (Full setup details in [`deploy.md`](./deploy.md).)
 
-## Demo script (produces 50+ onchain tx)
+---
 
-**Before demo**:
-1. Deploy contract, set `STAMP_ESCROW_ADDRESS`.
-2. Sign up two users: `founder` (the VIP) and `spammer` (the bot).
-3. Send each wallet ~$5 of testnet USDC from https://faucet.circle.com so
-   they have both gas and stake liquidity.
+## 📨 The tagline
 
-**Live walkthrough** (produces 55 tx without using batching):
-
-| # | Action | Tx on Arc |
-|---|--------|-----------|
-| 1 | Sign up a 3rd judge account (wallet auto-provisioned) | 0 |
-| 2 | Judge → compose stamped message to `founder` ($0.25) | 2 (approve + send) |
-| 3 | Switch to `founder` inbox; status = `pending` | 0 |
-| 4 | Founder clicks **Refund** → judge's stake returns | 1 |
-| 5 | Open `/demo` as `spammer`, fire **25** stamps at `founder` ($0.10 each) | 50 |
-| 6 | Switch to `founder`, click **AI triage (GLM)** → classifications persist | 0 |
-| 7 | Triage one-by-one (5 Refund + 20 Forfeit, individual clicks) | 25 |
-| 8 | Show ArcScan: tx feed, spammer balance down, founder balance up | — |
-
-**Total: 2 + 1 + 50 + 25 = 78 tx.** For a shorter demo, use bulk **Forfeit**
-on step 7 (`forfeitBatch`) to collapse 25 resolves into 1 tx — still 53 tx.
-
-Running the spam wave a second time trivially doubles the count.
-
-## Architecture
-
-```
- Sender UI ──► /api/stamps/send ──► Circle DCW: approve(USDC → escrow)
-                                └─► Circle DCW: StampEscrow.sendStamp()
-                                └─► decodes StampSent event → stores onchain id
-
- Recipient UI ──► /api/stamps/triage ──► Circle DCW: refund() | forfeit()
-                                    └─► marks stamp resolved in DB
-
- Recipient UI ──► /api/stamps/suggest ──► GLM 5.1 → {legit,spam,unsure} per stamp
-
- Background: DB is a projection of onchain state. Arc is the authoritative
- ledger; contract view functions are source of truth on any dispute.
-```
-
-## Economics
-
-- `protocolFeeBps = 500` (5% of every forfeit). At 10k daily messages × 10%
-  spam × $0.25 × 5% = **$12.50/day protocol revenue per 10k daily messages.**
-- Variable cost per stamp lifecycle (approve + send + resolve = 3 onchain tx
-  at Arc's sub-cent gas): **~$0.001**. Economic margin is preserved.
-- On Stripe this same flow would cost the sender $0.924 in fees to stake
-  $0.25 ($0.308 × 3 ops), or ~370% of the stake value. Completely broken.
-
-## Feedback for Circle (hackathon track)
-
-Filed as `FEEDBACK.md` alongside this README — covers our experience with
-Nanopayments, Developer-Controlled Wallets, and Arc Testnet during the build.
-
-## What's next
-
-- **ERC-8004 reputation**: senders build a public "refund rate" score; receivers
-  sort inbox by reputation × stake.
-- **x402 reply-pricing**: recipient can bill senders for a written response.
-- **Agent inboxes**: MCP server that lets autonomous agents triage stamped
-  inbounds on behalf of a human.
-- **Anti-griefing**: cap the damage one spammer can cause a single recipient
-  per day via a rate-limited view on the contract.
+> **Every message in your inbox is worth at least a quarter — or it isn't there.**
