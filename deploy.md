@@ -20,7 +20,7 @@ You need:
 - Accounts at:
   - [console.circle.com](https://console.circle.com) — free
   - [tidbcloud.com](https://tidbcloud.com) — free Serverless tier
-  - [z.ai](https://z.ai) or any OpenAI-compatible GLM provider — for the AI
+  - A Gemini API key, [z.ai](https://z.ai), or any OpenAI-compatible provider — for the AI
     triage feature (optional; skip if you don't care about that button)
 
 ---
@@ -159,12 +159,26 @@ identifier. You don't need to change it.
 
 ---
 
-## 5. (Optional) Set up GLM 5.1 for AI triage
+## 5. (Optional) Set up AI triage
 
 Only needed if you want to demo the **AI triage** button.
 
-1. Sign up at https://z.ai
-2. Create an API key
+### Preferred: Gemini
+
+1. Create a Gemini API key.
+2. Set:
+   ```
+   GEMINI_API_KEY=<your key>
+   GEMINI_MODEL=gemini-3.1-flash-lite-preview
+   ```
+
+If `GEMINI_API_KEY` is filled in, the app uses Gemini instead of the fallback
+`LLM_*` provider.
+
+### Fallback: GLM / OpenAI-compatible endpoint
+
+1. Sign up at https://z.ai or another OpenAI-compatible provider.
+2. Create an API key.
 3. Set:
    ```
    LLM_BASE_URL=https://api.z.ai/api/paas/v4
@@ -193,7 +207,7 @@ look for it. Fill in, at minimum:
   `CIRCLE_BLOCKCHAIN` — from step 3
 - `DATABASE_URL` — from step 4
 - `AUTH_SECRET` — generate: `openssl rand -base64 32`
-- (optional) `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL` — from step 5
+- (optional) `GEMINI_API_KEY`, or `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL` — from step 5
 
 The other Arc values (`ARC_RPC_URL`, `USDC_ADDRESS`, etc.) are already
 correct as defaults.
@@ -246,8 +260,8 @@ open a third for the judge role.
    - Running tally: this fires 25 × 2 = **50 tx**. The log panel streams
      completion; takes ~1–2 minutes total because Circle processes in
      series.
-5. **Profile A → `/inbox`**: 25 new stamps. Click **AI triage (GLM)** —
-   GLM 5.1 classifies each as legit/spam/unsure. Pills appear on each
+5. **Profile A → `/inbox`**: 25 new stamps. Click **AI triage** —
+   the configured AI provider classifies each as legit/spam/unsure. Pills appear on each
    stamp.
 6. **Profile A**: click **Select AI-spam**, then **Forfeit**. If you want
    to maximize tx count, instead click each message's row and forfeit

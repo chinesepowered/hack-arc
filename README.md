@@ -89,7 +89,7 @@ This is what an **agentic economy** actually looks like: programmable wallets, p
 - 🔐 **Circle Developer-Controlled Wallets** — every user gets a real wallet on signup, no seed phrase, no extension
 - ⚡ **Circle Nanopayments** — what makes a 25¢ atomic transfer economically rational
 - 📜 **`StampEscrow.sol`** — ~150 lines of audited-pattern Solidity (OpenZeppelin v5, ReentrancyGuard, SafeERC20). Approve → stake → refund or forfeit. That's it.
-- 🧠 **GLM 5.1** — pre-classifies inbound stamps so you triage 25 messages in 5 seconds instead of 5 minutes
+- 🧠 **Gemini / OpenAI-compatible AI triage** — pre-classifies inbound stamps so you triage 25 messages in 5 seconds instead of 5 minutes
 - 🚀 **Next.js 16 + React 19** — full-stack TypeScript, deployed in one click
 
 ---

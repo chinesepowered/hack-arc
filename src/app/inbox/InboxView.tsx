@@ -163,7 +163,7 @@ export function InboxView({ folder }: { folder: "inbox" | "sent" }) {
               : "Select all pending"}
           </Button>
           <Button size="sm" variant="ghost" onClick={suggest} disabled={busy || !pending.length}>
-            AI triage (GLM)
+            AI triage
           </Button>
           <Button size="sm" variant="ghost" onClick={() => selectByAi("legit")}>
             Select AI-legit
@@ -321,7 +321,7 @@ function ActiveStamp({ stamp }: { stamp: Stamp }) {
       {stamp.aiTriageLabel && (
         <div className="mt-3 rounded-md border border-slate-900 bg-slate-900/40 px-3 py-2 text-xs">
           <p className="text-slate-400">
-            GLM says: <AiPill label={stamp.aiTriageLabel} />
+            AI says: <AiPill label={stamp.aiTriageLabel} />
           </p>
           {stamp.aiTriageReason && (
             <p className="mt-1 text-slate-300">{stamp.aiTriageReason}</p>
